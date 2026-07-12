@@ -13,7 +13,7 @@ router.get('/:id', audit_controller_js_1.auditController.getOne);
 // Only ADMIN can create and close cycles
 router.post('/', (0, auth_middleware_js_1.authorize)('ADMIN'), (0, validate_middleware_js_1.validate)(audit_schema_js_1.CreateAuditCycleSchema), audit_controller_js_1.auditController.create);
 router.patch('/:id/close', (0, auth_middleware_js_1.authorize)('ADMIN'), audit_controller_js_1.auditController.close);
-// All authenticated users can mark items
-router.patch('/:id/items/:itemId', (0, validate_middleware_js_1.validate)(audit_schema_js_1.UpdateAuditItemSchema), audit_controller_js_1.auditController.updateItem);
+// Only ADMIN and ASSET_MANAGER can mark items
+router.patch('/:id/items/:itemId', (0, auth_middleware_js_1.authorize)('ADMIN', 'ASSET_MANAGER'), (0, validate_middleware_js_1.validate)(audit_schema_js_1.UpdateAuditItemSchema), audit_controller_js_1.auditController.updateItem);
 exports.default = router;
 //# sourceMappingURL=audit.routes.js.map

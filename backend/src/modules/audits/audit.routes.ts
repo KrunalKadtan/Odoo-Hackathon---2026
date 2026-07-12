@@ -16,7 +16,7 @@ router.get('/:id', auditController.getOne);
 router.post('/', authorize('ADMIN'), validate(CreateAuditCycleSchema), auditController.create);
 router.patch('/:id/close', authorize('ADMIN'), auditController.close);
 
-// All authenticated users can mark items
-router.patch('/:id/items/:itemId', validate(UpdateAuditItemSchema), auditController.updateItem);
+// Only ADMIN and ASSET_MANAGER can mark items
+router.patch('/:id/items/:itemId', authorize('ADMIN', 'ASSET_MANAGER'), validate(UpdateAuditItemSchema), auditController.updateItem);
 
 export default router;
