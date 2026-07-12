@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/axios';
+import { DateTimePicker } from '../../components/ui/DateTimePicker';
 import { DataTable } from '../../components/ui/DataTable';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { Button } from '../../components/ui/Button';
@@ -13,6 +14,7 @@ interface Allocation {
   id: string;
   status: string;
   allocatedAt: string;
+  expectedReturnDate: string | null;
   returnedAt: string | null;
   asset: { id: string; name: string; serialNo: string | null };
   user: { id: string; name: string; department: { name: string } | null };
@@ -35,6 +37,7 @@ export const AllocationsPage = () => {
   const [availableAssets, setAvailableAssets] = useState<{id: string, name: string}[]>([]);
   const [newAllocationAssetId, setNewAllocationAssetId] = useState('');
   const [newAllocationUserId, setNewAllocationUserId] = useState('');
+  const [newAllocationExpectedReturnDate, setNewAllocationExpectedReturnDate] = useState<Date | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const { user } = useAuthStore();
@@ -94,6 +97,7 @@ export const AllocationsPage = () => {
   const openCreateModal = () => {
     setNewAllocationAssetId('');
     setNewAllocationUserId('');
+    setNewAllocationExpectedReturnDate(null);
     if (allUsers.length === 0) fetchUsers();
     fetchAvailableAssets();
     setIsCreateOpen(true);
@@ -103,7 +107,11 @@ export const AllocationsPage = () => {
     if (!newAllocationAssetId || !newAllocationUserId) return;
     setIsCreating(true);
     try {
-      await api.post('/allocations', { assetId: newAllocationAssetId, userId: newAllocationUserId });
+      await api.post('/allocations', { 
+        assetId: newAllocationAssetId, 
+        userId: newAllocationUserId,
+        expectedReturnDate: newAllocationExpectedReturnDate?.toISOString()
+      });
       toast.success('Asset allocated successfully');
       setIsCreateOpen(false);
       fetchAllocations();
@@ -199,6 +207,18 @@ export const AllocationsPage = () => {
               </div>
             ) },
             { header: 'Date', accessor: (row) => new Date(row.allocatedAt).toLocaleDateString() },
+            { header: 'Expected Return', accessor: (row) => {
+              if (!row.expectedReturnDate) return <span className="text-zinc-600">-</span>;
+              const isOverdue = new Date(row.expectedReturnDate) < new Date() && row.status === 'ACTIVE';
+              return (
+                <div className="flex flex-col">
+                  <span className={isOverdue ? 'text-red-400 font-medium' : 'text-zinc-300'}>
+                    {new Date(row.expectedReturnDate).toLocaleDateString()}
+                  </span>
+                  {isOverdue && <span className="text-[10px] text-red-500 uppercase tracking-wider font-bold">Overdue</span>}
+                </div>
+              );
+            }},
             { header: 'Status', accessor: (row) => <StatusBadge status={row.status} /> },
             ...(canManageAllocations ? [{ 
               header: 'Actions', 
@@ -316,6 +336,13 @@ export const AllocationsPage = () => {
               ))}
             </select>
           </div>
+
+          <DateTimePicker
+            label="Expected Return Date (Optional)"
+            selected={newAllocationExpectedReturnDate}
+            onChange={setNewAllocationExpectedReturnDate}
+            placeholderText="Select return date"
+          />
 
           <div className="pt-4 border-t border-zinc-800 flex justify-end gap-3">
             <Button variant="secondary" onClick={() => setIsCreateOpen(false)}>Cancel</Button>

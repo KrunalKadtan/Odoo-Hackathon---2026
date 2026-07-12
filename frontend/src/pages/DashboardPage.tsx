@@ -25,6 +25,7 @@ interface DashboardData {
   activity: {
     allocations: any[];
     maintenance: any[];
+    overdue?: any[];
   };
 }
 
@@ -73,27 +74,42 @@ export const DashboardPage = () => {
     const underMaintenance = data.stats.assetStatusBreakdown?.UNDER_MAINTENANCE ?? 0;
     const activebookings = data.stats.activeBookings ?? 0;
     const pendingTransfers = data.stats.pendingTransfers ?? 0;
+    const overdueReturns = data.stats.overdueReturns ?? 0;
 
     return (
       <div className="space-y-5">
-        {/* KPI Grid — wireframe 2×3 */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* KPI Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard label="Total Assets" value={data.stats.totalAssets ?? 0} icon={Package} accent="indigo" />
           <KpiCard label="Available" value={available} icon={CheckCircle} accent="emerald" />
           <KpiCard label="Allocated" value={allocated} icon={Users} accent="blue" />
+          <KpiCard label="Overdue Returns" value={overdueReturns} icon={AlertTriangle} accent="red" />
           <KpiCard label="Active Bookings" value={activebookings} icon={CalendarDays} accent="purple" />
           <KpiCard label="Pending Transfers" value={pendingTransfers} icon={ArrowRightLeft} accent="amber" />
+          <KpiCard label="Pending Maint." value={pendingMaint} icon={Wrench} accent="orange" />
           <KpiCard label="Open Audits" value={data.stats.openAudits ?? 0} icon={ShieldCheck} accent="violet" />
         </div>
 
-        {/* Alert Banner */}
-        {pendingMaint > 0 && (
+        {overdueReturns > 0 && (
           <div className="flex items-center gap-4 px-5 py-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400">
             <AlertTriangle className="h-5 w-5 shrink-0" />
             <p className="text-sm font-medium flex-1">
-              {pendingMaint} maintenance request{pendingMaint > 1 ? 's' : ''} pending — assets may be flagged for follow-up
+              {overdueReturns} asset{overdueReturns > 1 ? 's are' : ' is'} overdue for return.
             </p>
-            <span className="text-xs text-red-500/70 bg-red-500/10 border border-red-500/20 px-2 py-1 rounded">Needs Attention</span>
+            <a href="/allocations" className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-md hover:bg-red-500/20 transition-colors">
+              View Allocations
+            </a>
+          </div>
+        )}
+        {pendingMaint > 0 && (
+          <div className="flex items-center gap-4 px-5 py-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+            <Wrench className="h-5 w-5 shrink-0" />
+            <p className="text-sm font-medium flex-1">
+              {pendingMaint} maintenance request{pendingMaint > 1 ? 's' : ''} pending
+            </p>
+            <a href="/maintenance" className="text-xs text-amber-500/70 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-md hover:bg-amber-500/20 transition-colors">
+              Needs Attention
+            </a>
           </div>
         )}
         {underMaintenance > 0 && (
@@ -248,6 +264,8 @@ const KpiCard = ({ label, value, icon: Icon, accent }: { label: string; value: n
     amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     purple: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
     violet: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+    red: 'bg-red-500/10 text-red-400 border-red-500/20',
+    orange: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
     zinc: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
   };
   const cls = accentMap[accent] || accentMap.zinc;

@@ -4,6 +4,8 @@ export const CreateAssetSchema = z.object({
   name: z.string().min(2, 'Asset name must be at least 2 characters'),
   category: z.string().min(2, 'Category is required'),
   serialNo: z.string().optional().nullable(),
+  assetTag: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
   purchaseDate: z.string().datetime().optional().nullable(),
   value: z.number().nonnegative().optional().nullable(),
   departmentId: z.string().uuid().optional().nullable(),

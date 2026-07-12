@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const CreateAllocationSchema = z.object({
   assetId: z.string().uuid('Invalid asset ID'),
   userId: z.string().uuid('Invalid user ID'),
+  expectedReturnDate: z.string().datetime().optional().nullable(),
 });
 
 export const ApproveTransferSchema = z.object({

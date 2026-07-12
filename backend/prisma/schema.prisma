@@ -91,6 +91,8 @@ model Asset {
   category     String
   status       AssetStatus @default(AVAILABLE)
   serialNo     String?     @unique
+  assetTag     String?     @unique
+  location     String?
   purchaseDate DateTime?
   value        Float?
   
@@ -111,6 +113,7 @@ model Allocation {
   assetId     String
   userId      String
   allocatedAt DateTime         @default(now())
+  expectedReturnDate DateTime?
   returnedAt  DateTime?
   status      AllocationStatus @default(ACTIVE)
 

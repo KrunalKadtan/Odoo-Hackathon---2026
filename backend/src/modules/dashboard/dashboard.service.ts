@@ -16,7 +16,9 @@ export const dashboardService = {
         pendingMaintenance,
         openAudits,
         recentAllocations,
-        recentMaintenance
+        recentMaintenance,
+        overdueReturns,
+        overdueAllocations
       ] = await Promise.all([
         prisma.asset.count(),
         prisma.asset.groupBy({ by: ['status'], _count: { status: true } }),
@@ -33,6 +35,21 @@ export const dashboardService = {
           take: 5,
           orderBy: { createdAt: 'desc' },
           include: { raisedBy: { select: { name: true } }, asset: { select: { name: true } } }
+        }),
+        prisma.allocation.count({
+          where: {
+            status: 'ACTIVE',
+            expectedReturnDate: { lt: new Date() }
+          }
+        }),
+        prisma.allocation.findMany({
+          where: {
+            status: 'ACTIVE',
+            expectedReturnDate: { lt: new Date() }
+          },
+          take: 5,
+          orderBy: { expectedReturnDate: 'asc' },
+          include: { user: { select: { name: true } }, asset: { select: { name: true } } }
         })
       ]);
 
@@ -49,11 +66,13 @@ export const dashboardService = {
           totalUsers,
           totalDepartments,
           pendingMaintenance,
-          openAudits
+          openAudits,
+          overdueReturns
         },
         activity: {
           allocations: recentAllocations,
-          maintenance: recentMaintenance
+          maintenance: recentMaintenance,
+          overdue: overdueAllocations
         }
       };
     } else {

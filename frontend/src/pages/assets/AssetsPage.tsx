@@ -22,6 +22,8 @@ interface Asset {
   category: string;
   status: string;
   serialNo: string | null;
+  assetTag?: string;
+  location?: string;
   department: { name: string } | null;
   allocations?: Allocation[];
 }
@@ -41,6 +43,8 @@ export const AssetsPage = () => {
     name: '',
     category: '',
     serialNo: '',
+    assetTag: '',
+    location: '',
     departmentId: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,11 +118,13 @@ export const AssetsPage = () => {
       await api.post('/assets', {
         ...formData,
         departmentId: formData.departmentId || undefined,
-        serialNo: formData.serialNo || undefined
+        serialNo: formData.serialNo || undefined,
+        assetTag: formData.assetTag || undefined,
+        location: formData.location || undefined
       });
       toast.success('Asset registered successfully');
       setIsSlideOpen(false);
-      setFormData({ name: '', category: '', serialNo: '', departmentId: '' });
+      setFormData({ name: '', category: '', serialNo: '', assetTag: '', location: '', departmentId: '' });
       fetchAssets();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to register asset');
@@ -213,9 +219,10 @@ export const AssetsPage = () => {
         <DataTable
           data={assets}
           columns={[
+            { header: 'Asset Tag', accessor: (row) => row.assetTag || <span className="text-zinc-600">-</span> },
             { header: 'Asset Name', accessor: 'name' },
             { header: 'Category', accessor: 'category' },
-            { header: 'Serial No', accessor: (row) => row.serialNo || <span className="text-zinc-600">-</span> },
+            { header: 'Location', accessor: (row) => row.location || <span className="text-zinc-600">-</span> },
             { header: 'Department', accessor: (row) => row.department?.name || <span className="text-zinc-600">Global</span> },
             { header: 'Status', accessor: (row) => <StatusBadge status={row.status} /> },
           ]}
@@ -244,6 +251,18 @@ export const AssetsPage = () => {
             value={formData.category}
             onChange={(e) => setFormData({...formData, category: e.target.value})}
             placeholder="Electronics"
+          />
+          <Input
+            label="Asset Tag"
+            value={formData.assetTag}
+            onChange={(e) => setFormData({...formData, assetTag: e.target.value})}
+            placeholder="AF-0001"
+          />
+          <Input
+            label="Location"
+            value={formData.location}
+            onChange={(e) => setFormData({...formData, location: e.target.value})}
+            placeholder="HQ - Floor 2"
           />
           <Input
             label="Serial Number (Optional)"
@@ -290,10 +309,14 @@ export const AssetsPage = () => {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-medium text-white mb-1">{selectedAsset.name}</h3>
-              <p className="text-sm text-zinc-400">SN: {selectedAsset.serialNo || 'N/A'} • {selectedAsset.category}</p>
+              <p className="text-sm text-zinc-400">Tag: {selectedAsset.assetTag || 'N/A'} • SN: {selectedAsset.serialNo || 'N/A'} • {selectedAsset.category}</p>
             </div>
 
             <div className="bg-zinc-900/50 rounded-lg p-4 border border-zinc-800 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-zinc-400">Location</span>
+                <span className="text-sm text-zinc-200">{selectedAsset.location || 'Not Set'}</span>
+              </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-zinc-400">Status</span>
                 <StatusBadge status={selectedAsset.status} />
