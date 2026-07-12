@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/axios';
-import { DataTable } from '../../components/ui/DataTable';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { Button } from '../../components/ui/Button';
 import { SlideOver } from '../../components/ui/SlideOver';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '../../store/auth.store';
-import { CheckCircle2, XCircle, Wrench, PackageCheck, Plus } from 'lucide-react';
+import { CheckCircle2, XCircle, Wrench, PackageCheck, Plus, Clock, User } from 'lucide-react';
 
 interface MaintenanceRequest {
   id: string;
@@ -19,11 +18,17 @@ interface MaintenanceRequest {
   approvedBy: { id: string; name: string } | null;
 }
 
+const COLUMNS: { status: string; label: string; color: string; headerColor: string }[] = [
+  { status: 'REQUESTED',  label: 'Requested',  color: 'border-t-amber-500',  headerColor: 'text-amber-400 bg-amber-500/10' },
+  { status: 'APPROVED',   label: 'Approved',   color: 'border-t-blue-500',   headerColor: 'text-blue-400 bg-blue-500/10' },
+  { status: 'COMPLETED',  label: 'Completed',  color: 'border-t-emerald-500', headerColor: 'text-emerald-400 bg-emerald-500/10' },
+  { status: 'REJECTED',   label: 'Rejected',   color: 'border-t-red-500',    headerColor: 'text-red-400 bg-red-500/10' },
+];
+
 export const MaintenancePage = () => {
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState('ALL');
 
   // Raise Request slide-over
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -49,7 +54,6 @@ export const MaintenancePage = () => {
 
   const fetchMyAssets = async () => {
     try {
-      // Get active allocations to find assets user can raise maintenance for
       const res = await api.get('/allocations?status=ACTIVE');
       const allocations = res.data.data as any[];
       setMyAssets(allocations.map((a: any) => a.asset));
@@ -93,116 +97,114 @@ export const MaintenancePage = () => {
     setIsCreateOpen(true);
   };
 
-  const filtered = filterStatus === 'ALL' ? requests : requests.filter(r => r.status === filterStatus);
-
-  const StatusFilter = (
-    <div className="flex items-center gap-3">
-      <select
-        value={filterStatus}
-        onChange={(e) => setFilterStatus(e.target.value)}
-        className="bg-zinc-900 border border-zinc-800 rounded-md px-3 py-1.5 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-      >
-        <option value="ALL">All Status</option>
-        <option value="REQUESTED">Requested</option>
-        <option value="APPROVED">Approved</option>
-        <option value="REJECTED">Rejected</option>
-        <option value="COMPLETED">Completed</option>
-      </select>
-      <Button variant="primary" size="sm" onClick={openCreateSlideOver}>
-        <Plus className="h-4 w-4 mr-1" /> Raise Request
-      </Button>
-    </div>
-  );
-
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Maintenance</h1>
           <p className="text-zinc-400 text-sm mt-1">Track asset repair requests and approvals.</p>
         </div>
+        <Button variant="primary" onClick={openCreateSlideOver}>
+          <Plus className="h-4 w-4 mr-2" /> Raise Request
+        </Button>
       </div>
 
       {isLoading ? (
         <TableSkeleton rows={5} />
       ) : (
-        <DataTable
-          data={filtered}
-          columns={[
-            {
-              header: 'Asset',
-              accessor: (row) => (
-                <div>
-                  <div className="font-medium">{row.asset.name}</div>
-                  <div className="text-xs text-zinc-500">{row.asset.serialNo || 'No SN'}</div>
+        /* ── Kanban Board ──────────────────────────────────────────── */
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {COLUMNS.map(col => {
+            const cards = requests.filter(r => r.status === col.status);
+            return (
+              <div key={col.status} className={`bg-zinc-900/40 border border-zinc-800 border-t-2 ${col.color} rounded-xl flex flex-col min-h-[300px]`}>
+                {/* Column Header */}
+                <div className="px-4 py-3 flex items-center justify-between border-b border-zinc-800">
+                  <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded ${col.headerColor}`}>
+                    {col.label}
+                  </span>
+                  <span className="text-xs text-zinc-600 font-medium">{cards.length}</span>
                 </div>
-              ),
-            },
-            {
-              header: 'Raised By',
-              accessor: (row) => (
-                <div>
-                  <div className="font-medium">{row.raisedBy.name}</div>
-                  <div className="text-xs text-zinc-500">{row.raisedBy.department?.name || 'Global'}</div>
-                </div>
-              ),
-            },
-            {
-              header: 'Description',
-              accessor: (row) => (
-                <span className="text-sm text-zinc-300 line-clamp-2 max-w-xs">{row.description}</span>
-              ),
-            },
-            {
-              header: 'Date',
-              accessor: (row) => new Date(row.createdAt).toLocaleDateString(),
-            },
-            {
-              header: 'Status',
-              accessor: (row) => <StatusBadge status={row.status} />,
-            },
-            ...(canManage ? [{
-              header: 'Actions',
-              accessor: (row: MaintenanceRequest) => (
-                <div className="flex gap-2 flex-wrap">
-                  {row.status === 'REQUESTED' && (
-                    <>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleAction(row.id, 'approve')}
-                        isLoading={actionLoadingId === row.id}
-                        disabled={actionLoadingId !== null && actionLoadingId !== row.id}
-                      >
-                        <CheckCircle2 className="h-4 w-4 mr-1" /> Approve
-                      </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleAction(row.id, 'reject')}
-                        disabled={actionLoadingId !== null && actionLoadingId !== row.id}
-                      >
-                        <XCircle className="h-4 w-4 mr-1" /> Reject
-                      </Button>
-                    </>
-                  )}
-                  {row.status === 'APPROVED' && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleAction(row.id, 'complete')}
-                      isLoading={actionLoadingId === row.id}
-                      disabled={actionLoadingId !== null && actionLoadingId !== row.id}
+
+                {/* Cards */}
+                <div className="p-3 space-y-3 flex-1">
+                  {cards.length === 0 ? (
+                    <div className="flex items-center justify-center h-24 text-zinc-700 text-xs">
+                      No requests
+                    </div>
+                  ) : cards.map(req => (
+                    <div
+                      key={req.id}
+                      className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 hover:border-zinc-700 transition-all"
                     >
-                      <PackageCheck className="h-4 w-4 mr-1" /> Complete
-                    </Button>
-                  )}
+                      {/* Asset Name */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="text-sm font-medium text-zinc-100 leading-tight">{req.asset.name}</p>
+                        <span className="text-[10px] text-zinc-600 shrink-0">
+                          {req.asset.serialNo ? `#${req.asset.serialNo}` : ''}
+                        </span>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-xs text-zinc-500 line-clamp-2 mb-3">{req.description}</p>
+
+                      {/* Meta */}
+                      <div className="flex items-center gap-3 text-[11px] text-zinc-600 mb-3">
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {req.raisedBy.name}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(req.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      {/* Actions */}
+                      {canManage && (
+                        <div className="flex gap-1.5 flex-wrap">
+                          {req.status === 'REQUESTED' && (
+                            <>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => handleAction(req.id, 'approve')}
+                                isLoading={actionLoadingId === req.id}
+                                disabled={actionLoadingId !== null && actionLoadingId !== req.id}
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                onClick={() => handleAction(req.id, 'reject')}
+                                disabled={actionLoadingId !== null && actionLoadingId !== req.id}
+                              >
+                                <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
+                              </Button>
+                            </>
+                          )}
+                          {req.status === 'APPROVED' && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleAction(req.id, 'complete')}
+                              isLoading={actionLoadingId === req.id}
+                              disabled={actionLoadingId !== null && actionLoadingId !== req.id}
+                            >
+                              <PackageCheck className="h-3.5 w-3.5 mr-1" /> Complete
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ),
-            }] : []),
-          ]}
-          filterComponent={StatusFilter}
-        />
+              </div>
+            );
+          })}
+        </div>
       )}
 
       {/* Raise Maintenance Request SlideOver */}

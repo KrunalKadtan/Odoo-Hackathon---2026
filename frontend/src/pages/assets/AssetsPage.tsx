@@ -161,23 +161,28 @@ export const AssetsPage = () => {
     }
   };
 
-  const StatusFilter = (
-    <select
-      value={filterStatus}
-      onChange={(e) => setFilterStatus(e.target.value)}
-      className="bg-zinc-900 border border-zinc-800 text-sm rounded-md px-3 py-2 text-zinc-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 h-10"
-    >
-      <option value="">All Statuses</option>
-      <option value="AVAILABLE">Available</option>
-      <option value="ALLOCATED">Allocated</option>
-      <option value="UNDER_MAINTENANCE">Under Maintenance</option>
-      <option value="LOST">Lost</option>
-    </select>
-  );
+  const STATUS_PILLS = [
+    { value: '', label: 'All' },
+    { value: 'AVAILABLE', label: 'Available', color: 'emerald' },
+    { value: 'ALLOCATED', label: 'Allocated', color: 'blue' },
+    { value: 'UNDER_MAINTENANCE', label: 'Maintenance', color: 'amber' },
+    { value: 'LOST', label: 'Lost', color: 'red' },
+  ];
+
+  const pillClass = (val: string, color?: string) => {
+    if (filterStatus !== val) return 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700';
+    const map: Record<string, string> = {
+      emerald: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400',
+      blue: 'bg-blue-500/15 border-blue-500/40 text-blue-400',
+      amber: 'bg-amber-500/15 border-amber-500/40 text-amber-400',
+      red: 'bg-red-500/15 border-red-500/40 text-red-400',
+    };
+    return color ? map[color] : 'bg-indigo-500/15 border-indigo-500/40 text-indigo-400';
+  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Asset Directory</h1>
           <p className="text-zinc-400 text-sm mt-1">Manage and track company assets globally.</p>
@@ -187,6 +192,19 @@ export const AssetsPage = () => {
             <Plus className="mr-2 h-4 w-4" /> Register Asset
           </Button>
         )}
+      </div>
+
+      {/* Pill filters */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {STATUS_PILLS.map(p => (
+          <button
+            key={p.value}
+            onClick={() => setFilterStatus(p.value)}
+            className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-200 ${pillClass(p.value, p.color)}`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -202,7 +220,6 @@ export const AssetsPage = () => {
             { header: 'Status', accessor: (row) => <StatusBadge status={row.status} /> },
           ]}
           searchField="name"
-          filterComponent={StatusFilter}
           onRowClick={handleRowClick}
         />
       )}
