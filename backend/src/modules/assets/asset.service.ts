@@ -72,6 +72,8 @@ export const assetService = {
         category: data.category,
         serialNo: data.serialNo || null,
         purchaseDate: data.purchaseDate || null,
+        assetTag: data.assetTag || null,
+        location: data.location || null,
         value: data.value || null,
         departmentId: data.departmentId || null,
       },

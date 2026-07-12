@@ -43,6 +43,7 @@ export const allocationService = {
         data: {
           assetId: data.assetId,
           userId: data.userId,
+          expectedReturnDate: data.expectedReturnDate || null,
           status: 'ACTIVE',
         },
         include: {

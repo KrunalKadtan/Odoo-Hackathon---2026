@@ -35,6 +35,11 @@ const today = () => {
   return d;
 };
 
+const toLocalISOString = (d: Date) => {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 export const BookingsPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,10 +125,9 @@ export const BookingsPage = () => {
   };
 
   // Filter bookings for selected timeline date
-  const viewDateStr = viewDate.toISOString().split('T')[0];
+  const viewDateStr = toLocalISOString(viewDate);
   const dayBookings = bookings.filter(b => {
-    const d = new Date(b.startTime).toISOString().split('T')[0];
-    return d === viewDateStr;
+    return toLocalISOString(new Date(b.startTime)) === viewDateStr;
   });
 
   // Unique resources in all bookings
