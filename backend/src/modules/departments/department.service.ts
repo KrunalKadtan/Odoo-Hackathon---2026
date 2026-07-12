@@ -29,6 +29,9 @@ export const departmentService = {
     if (data.headId) {
       const user = await prisma.user.findUnique({ where: { id: data.headId } });
       if (!user) throw new AppError('Department head user not found', 404);
+      if (user.role !== 'DEPT_HEAD' && user.role !== 'ADMIN') {
+        throw new AppError('Only users with DEPT_HEAD or ADMIN roles can be assigned as a department head.', 400);
+      }
     }
 
     const department = await prisma.department.create({
@@ -42,6 +45,11 @@ export const departmentService = {
     });
 
     if (data.headId) {
+      await prisma.department.updateMany({
+        where: { headId: data.headId, id: { not: department.id } },
+        data: { headId: null }
+      });
+      
       await prisma.user.update({
         where: { id: data.headId },
         data: { departmentId: department.id }
@@ -58,6 +66,9 @@ export const departmentService = {
     if (data.headId) {
       const user = await prisma.user.findUnique({ where: { id: data.headId } });
       if (!user) throw new AppError('Department head user not found', 404);
+      if (user.role !== 'DEPT_HEAD' && user.role !== 'ADMIN') {
+        throw new AppError('Only users with DEPT_HEAD or ADMIN roles can be assigned as a department head.', 400);
+      }
     }
 
     const updatedDepartment = await prisma.department.update({
@@ -71,6 +82,11 @@ export const departmentService = {
     });
 
     if (data.headId) {
+      await prisma.department.updateMany({
+        where: { headId: data.headId, id: { not: id } },
+        data: { headId: null }
+      });
+      
       await prisma.user.update({
         where: { id: data.headId },
         data: { departmentId: id }

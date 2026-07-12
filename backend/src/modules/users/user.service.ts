@@ -21,6 +21,13 @@ export const userService = {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw new AppError('User not found', 404);
 
+    if (data.role === 'EMPLOYEE' || data.role === 'ASSET_MANAGER') {
+      await prisma.department.updateMany({
+        where: { headId: id },
+        data: { headId: null },
+      });
+    }
+
     return prisma.user.update({
       where: { id },
       data: { role: data.role },
@@ -31,6 +38,13 @@ export const userService = {
   async updateUserDepartment(id: string, data: UpdateUserDepartmentInput) {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw new AppError('User not found', 404);
+
+    if (user.departmentId !== data.departmentId) {
+      await prisma.department.updateMany({
+        where: { headId: id },
+        data: { headId: null },
+      });
+    }
 
     return prisma.user.update({
       where: { id },
