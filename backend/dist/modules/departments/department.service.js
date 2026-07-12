@@ -29,7 +29,7 @@ exports.departmentService = {
             if (!user)
                 throw new AppError_js_1.AppError('Department head user not found', 404);
         }
-        return prisma_js_1.prisma.department.create({
+        const department = await prisma_js_1.prisma.department.create({
             data: {
                 name: data.name,
                 headId: data.headId || null,
@@ -38,6 +38,39 @@ exports.departmentService = {
                 head: { select: { id: true, name: true } },
             },
         });
+        if (data.headId) {
+            await prisma_js_1.prisma.user.update({
+                where: { id: data.headId },
+                data: { departmentId: department.id }
+            });
+        }
+        return department;
+    },
+    async updateDepartment(id, data) {
+        const department = await prisma_js_1.prisma.department.findUnique({ where: { id } });
+        if (!department)
+            throw new AppError_js_1.AppError('Department not found', 404);
+        if (data.headId) {
+            const user = await prisma_js_1.prisma.user.findUnique({ where: { id: data.headId } });
+            if (!user)
+                throw new AppError_js_1.AppError('Department head user not found', 404);
+        }
+        const updatedDepartment = await prisma_js_1.prisma.department.update({
+            where: { id },
+            data: {
+                headId: data.headId || null,
+            },
+            include: {
+                head: { select: { id: true, name: true } },
+            },
+        });
+        if (data.headId) {
+            await prisma_js_1.prisma.user.update({
+                where: { id: data.headId },
+                data: { departmentId: id }
+            });
+        }
+        return updatedDepartment;
     },
 };
 //# sourceMappingURL=department.service.js.map

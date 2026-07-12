@@ -5,4 +5,9 @@ export const CreateDepartmentSchema = z.object({
   headId: z.string().uuid('Invalid user ID').optional().nullable(),
 });
 
+export const UpdateDepartmentSchema = z.object({
+  headId: z.string().uuid('Invalid user ID').optional().nullable(),
+});
+
 export type CreateDepartmentInput = z.infer<typeof CreateDepartmentSchema>;
+export type UpdateDepartmentInput = z.infer<typeof UpdateDepartmentSchema>;

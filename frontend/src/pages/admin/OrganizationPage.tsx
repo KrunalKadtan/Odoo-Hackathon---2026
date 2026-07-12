@@ -19,7 +19,7 @@ interface User {
   name: string;
   email: string;
   role: string;
-  department: { name: string } | null;
+  department: { id: string; name: string } | null;
 }
 
 export const OrganizationPage = () => {
@@ -27,6 +27,12 @@ export const OrganizationPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isDeptSlideOpen, setIsDeptSlideOpen] = useState(false);
   
+  // Edit User State
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editUserRole, setEditUserRole] = useState('');
+  const [editUserDept, setEditUserDept] = useState('');
+  const [isUserSubmitting, setIsUserSubmitting] = useState(false);
+
   // Department Form
   const [newDeptName, setNewDeptName] = useState('');
   const [newDeptHead, setNewDeptHead] = useState('');
@@ -71,13 +77,45 @@ export const OrganizationPage = () => {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleEditUserClick = (user: User) => {
+    setEditingUserId(user.id);
+    setEditUserRole(user.role);
+    setEditUserDept(user.department?.id || '');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUserId(null);
+  };
+
+  const handleUpdateUser = async (userId: string) => {
+    setIsUserSubmitting(true);
     try {
-      await api.patch(`/users/${userId}/role`, { role: newRole });
-      toast.success('Role updated');
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      if (editUserRole !== user.role) {
+        await api.patch(`/users/${userId}/role`, { role: editUserRole });
+      }
+      if (editUserDept !== (user.department?.id || '')) {
+        await api.patch(`/users/${userId}/department`, { departmentId: editUserDept || null });
+      }
+      toast.success('User updated successfully');
+      setEditingUserId(null);
       fetchData();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update role');
+      toast.error(error.response?.data?.message || 'Failed to update user');
+    } finally {
+      setIsUserSubmitting(false);
+    }
+  };
+
+  const handleUpdateHead = async (deptId: string, headId: string) => {
+    try {
+      await api.patch(`/departments/${deptId}`, { headId: headId || null });
+      toast.success('Department head updated');
+      fetchData();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update department head');
     }
   };
 
@@ -98,7 +136,21 @@ export const OrganizationPage = () => {
           data={departments}
           columns={[
             { header: 'Department', accessor: 'name' },
-            { header: 'Head', accessor: (row) => row.head?.name || <span className="text-zinc-500 italic">Unassigned</span> },
+            { 
+              header: 'Head', 
+              accessor: (row) => (
+                <select
+                  value={row.head?.email ? users.find(u => u.email === row.head?.email)?.id || '' : ''}
+                  onChange={(e) => handleUpdateHead(row.id, e.target.value)}
+                  className="bg-zinc-900 border border-zinc-700 text-sm rounded-md px-2 py-1 text-zinc-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                >
+                  <option value="">Unassigned</option>
+                  {users.filter(u => ['DEPT_HEAD', 'ADMIN'].includes(u.role)).map(u => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+                </select>
+              )
+            },
             { header: 'Members', accessor: (row) => row._count.members },
             { header: 'Assets', accessor: (row) => row._count.assets },
           ]}
@@ -117,13 +169,27 @@ export const OrganizationPage = () => {
           columns={[
             { header: 'Name', accessor: 'name' },
             { header: 'Email', accessor: 'email' },
-            { header: 'Department', accessor: (row) => row.department?.name || '-' },
+            { 
+              header: 'Department', 
+              accessor: (row) => editingUserId === row.id ? (
+                <select
+                  value={editUserDept}
+                  onChange={(e) => setEditUserDept(e.target.value)}
+                  className="bg-zinc-900 border border-zinc-700 text-sm rounded-md px-2 py-1 text-zinc-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 max-w-[150px]"
+                >
+                  <option value="">-</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              ) : (row.department?.name || '-')
+            },
             { 
               header: 'Role', 
-              accessor: (row) => (
+              accessor: (row) => editingUserId === row.id ? (
                 <select
-                  value={row.role}
-                  onChange={(e) => handleRoleChange(row.id, e.target.value)}
+                  value={editUserRole}
+                  onChange={(e) => setEditUserRole(e.target.value)}
                   className="bg-zinc-900 border border-zinc-700 text-sm rounded-md px-2 py-1 text-zinc-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                 >
                   <option value="EMPLOYEE">Employee</option>
@@ -131,8 +197,25 @@ export const OrganizationPage = () => {
                   <option value="ASSET_MANAGER">Asset Manager</option>
                   <option value="ADMIN">Admin</option>
                 </select>
-              )
+              ) : row.role.replace('_', ' ') 
             },
+            {
+              header: 'Actions',
+              accessor: (row) => editingUserId === row.id ? (
+                <div className="flex gap-2">
+                  <Button variant="primary" onClick={() => handleUpdateUser(row.id)} size="sm" isLoading={isUserSubmitting} className="h-8 text-xs px-3">
+                    Save
+                  </Button>
+                  <Button variant="ghost" onClick={handleCancelEdit} size="sm" disabled={isUserSubmitting} className="h-8 text-xs px-3">
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button variant="secondary" onClick={() => handleEditUserClick(row)} size="sm" className="border-zinc-700 hover:bg-zinc-700 h-8 text-xs px-3">
+                  Edit
+                </Button>
+              )
+            }
           ]}
           searchField="name"
         />
@@ -163,7 +246,7 @@ export const OrganizationPage = () => {
               className="block w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
             >
               <option value="">Select a user...</option>
-              {users.map(u => (
+              {users.filter(u => ['DEPT_HEAD', 'ADMIN'].includes(u.role)).map(u => (
                 <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
               ))}
             </select>

@@ -19,4 +19,13 @@ export const departmentController = {
       next(error);
     }
   },
+
+  async update(req: Request, res: Response, next: NextFunction) {
+    try {
+      const department = await departmentService.updateDepartment(req.params.id as string, req.body);
+      res.status(200).json({ status: 'success', data: department });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

@@ -27,5 +27,15 @@ exports.userService = {
             select: { id: true, name: true, role: true },
         });
     },
+    async updateUserDepartment(id, data) {
+        const user = await prisma_js_1.prisma.user.findUnique({ where: { id } });
+        if (!user)
+            throw new AppError_js_1.AppError('User not found', 404);
+        return prisma_js_1.prisma.user.update({
+            where: { id },
+            data: { departmentId: data.departmentId || null },
+            select: { id: true, name: true, department: { select: { id: true, name: true } } },
+        });
+    },
 };
 //# sourceMappingURL=user.service.js.map

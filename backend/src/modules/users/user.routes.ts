@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { userController } from './user.controller.js';
 import { validate } from '../../middlewares/validate.middleware.js';
 import { authenticate, authorize } from '../../middlewares/auth.middleware.js';
-import { UpdateUserRoleSchema } from './user.schema.js';
+import { UpdateUserRoleSchema, UpdateUserDepartmentSchema } from './user.schema.js';
 
 const router = Router();
 
@@ -14,6 +14,13 @@ router.patch(
   authorize('ADMIN'),
   validate(UpdateUserRoleSchema),
   userController.updateRole
+);
+
+router.patch(
+  '/:id/department',
+  authorize('ADMIN'),
+  validate(UpdateUserDepartmentSchema),
+  userController.updateDepartment
 );
 
 export default router;

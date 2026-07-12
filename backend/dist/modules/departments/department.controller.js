@@ -21,5 +21,14 @@ exports.departmentController = {
             next(error);
         }
     },
+    async update(req, res, next) {
+        try {
+            const department = await department_service_js_1.departmentService.updateDepartment(req.params.id, req.body);
+            res.status(200).json({ status: 'success', data: department });
+        }
+        catch (error) {
+            next(error);
+        }
+    },
 };
 //# sourceMappingURL=department.controller.js.map

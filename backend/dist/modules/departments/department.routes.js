@@ -9,5 +9,6 @@ const router = (0, express_1.Router)();
 router.use(auth_middleware_js_1.authenticate);
 router.get('/', department_controller_js_1.departmentController.getAll);
 router.post('/', (0, auth_middleware_js_1.authorize)('ADMIN'), (0, validate_middleware_js_1.validate)(department_schema_js_1.CreateDepartmentSchema), department_controller_js_1.departmentController.create);
+router.patch('/:id', (0, auth_middleware_js_1.authorize)('ADMIN'), (0, validate_middleware_js_1.validate)(department_schema_js_1.UpdateDepartmentSchema), department_controller_js_1.departmentController.update);
 exports.default = router;
 //# sourceMappingURL=department.routes.js.map

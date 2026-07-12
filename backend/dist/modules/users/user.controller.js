@@ -22,5 +22,15 @@ exports.userController = {
             next(error);
         }
     },
+    async updateDepartment(req, res, next) {
+        try {
+            const { id } = req.params;
+            const user = await user_service_js_1.userService.updateUserDepartment(id, req.body);
+            res.status(200).json({ status: 'success', data: user });
+        }
+        catch (error) {
+            next(error);
+        }
+    },
 };
 //# sourceMappingURL=user.controller.js.map
