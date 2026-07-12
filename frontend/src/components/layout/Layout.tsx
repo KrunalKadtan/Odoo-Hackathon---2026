@@ -107,7 +107,9 @@ export const Layout = () => {
               <div className="flex items-center px-3 py-2 mb-2">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">{user?.name}</p>
-                  <p className="text-xs text-zinc-500 truncate">{user?.role}</p>
+                  <span className="inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    {user?.role.replace('_', ' ')}
+                  </span>
                 </div>
               </div>
               <button

@@ -176,7 +176,7 @@ export const AssetsPage = () => {
   );
 
   return (
-    <div className="animate-in fade-in">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Asset Directory</h1>
