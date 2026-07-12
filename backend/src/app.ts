@@ -8,6 +8,7 @@ import userRoutes from './modules/users/user.routes.js';
 import assetRoutes from './modules/assets/asset.routes.js';
 import allocationRoutes from './modules/allocations/allocation.routes.js';
 import bookingRoutes from './modules/bookings/booking.routes.js';
+import maintenanceRoutes from './modules/maintenance/maintenance.routes.js';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/assets', assetRoutes);
 app.use('/api/v1/allocations', allocationRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
+app.use('/api/v1/maintenance', maintenanceRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
