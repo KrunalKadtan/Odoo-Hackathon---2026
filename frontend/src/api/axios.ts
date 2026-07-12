@@ -21,3 +21,14 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Response interceptor to auto-logout on 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      useAuthStore.getState().logout();
+    }
+    return Promise.reject(error);
+  }
+);
