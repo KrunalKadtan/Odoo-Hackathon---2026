@@ -8,6 +8,8 @@ import { OrganizationPage } from './pages/admin/OrganizationPage';
 import { AssetsPage } from './pages/assets/AssetsPage';
 import { AllocationsPage } from './pages/allocations/AllocationsPage';
 import { BookingsPage } from './pages/bookings/BookingsPage';
+import { MaintenancePage } from './pages/maintenance/MaintenancePage';
+import { AuditsPage } from './pages/audits/AuditsPage';
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +45,14 @@ export const router = createBrowserRouter([
           {
             path: '/bookings',
             element: <BookingsPage />,
+          },
+          {
+            path: '/maintenance',
+            element: <MaintenancePage />,
+          },
+          {
+            path: '/audits',
+            element: <AuditsPage />,
           },
           {
             path: '/admin/organization',

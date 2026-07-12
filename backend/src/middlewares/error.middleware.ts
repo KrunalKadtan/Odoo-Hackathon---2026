@@ -17,10 +17,12 @@ export const errorHandler = (
   }
 
   if (err instanceof ZodError) {
+    const zodError = err as any;
+    const errorMessages = zodError.errors?.map((issue: any) => issue.message).join(', ');
     res.status(400).json({
       status: 'error',
-      message: 'Validation failed',
-      errors: (err as any).errors,
+      message: errorMessages || 'Validation failed',
+      errors: zodError.errors,
     });
     return;
   }

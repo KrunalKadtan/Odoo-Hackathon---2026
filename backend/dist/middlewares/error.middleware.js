@@ -12,10 +12,12 @@ const errorHandler = (err, req, res, next) => {
         return;
     }
     if (err instanceof zod_1.ZodError) {
+        const zodError = err;
+        const errorMessages = zodError.errors?.map((issue) => issue.message).join(', ');
         res.status(400).json({
             status: 'error',
-            message: 'Validation failed',
-            errors: err.errors,
+            message: errorMessages || 'Validation failed',
+            errors: zodError.errors,
         });
         return;
     }

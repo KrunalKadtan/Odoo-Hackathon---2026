@@ -42,7 +42,10 @@ export const auditService = {
   async createCycle(name: string) {
     // Get all auditable assets (AVAILABLE and ALLOCATED)
     const assets = await prisma.asset.findMany({
-      where: { status: { in: ['AVAILABLE', 'ALLOCATED'] } },
+      where: { 
+        status: { in: ['AVAILABLE', 'ALLOCATED'] },
+        category: { not: 'Room' }
+      },
       select: { id: true },
     });
 
@@ -94,10 +97,18 @@ export const auditService = {
   },
 
   async closeCycle(id: string) {
-    const cycle = await prisma.auditCycle.findUnique({ where: { id } });
+    const cycle = await prisma.auditCycle.findUnique({ 
+      where: { id },
+      include: { items: true }
+    });
     if (!cycle) throw new AppError('Audit cycle not found', 404);
     if (cycle.status === 'CLOSED') {
       throw new AppError('Audit cycle is already closed', 422);
+    }
+    
+    const hasPending = cycle.items.some(item => item.status === 'PENDING');
+    if (hasPending) {
+      throw new AppError('Cannot close audit cycle. All items must be VERIFIED or MISSING.', 422);
     }
 
     return prisma.auditCycle.update({
