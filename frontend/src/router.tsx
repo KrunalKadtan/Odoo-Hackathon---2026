@@ -6,6 +6,7 @@ import { Layout } from './components/layout/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { OrganizationPage } from './pages/admin/OrganizationPage';
 import { AssetsPage } from './pages/assets/AssetsPage';
+import { AllocationsPage } from './pages/allocations/AllocationsPage';
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
           {
             path: '/assets',
             element: <AssetsPage />,
+          },
+          {
+            path: '/allocations',
+            element: <AllocationsPage />,
           },
           {
             path: '/admin/organization',
