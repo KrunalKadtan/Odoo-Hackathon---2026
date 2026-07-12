@@ -2,9 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.prisma = void 0;
 const client_1 = require("@prisma/client");
+const pg_1 = require("pg");
+const adapter_pg_1 = require("@prisma/adapter-pg");
+const env_js_1 = require("./env.js");
+const pool = new pg_1.Pool({ connectionString: env_js_1.env.DATABASE_URL });
+const adapter = new adapter_pg_1.PrismaPg(pool);
 const globalForPrisma = global;
 exports.prisma = globalForPrisma.prisma ||
     new client_1.PrismaClient({
+        adapter,
         log: ['query', 'error', 'warn'],
     });
 if (process.env.NODE_ENV !== 'production')
