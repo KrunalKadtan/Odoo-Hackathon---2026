@@ -1,13 +1,172 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  ASSET_MANAGER
+  DEPT_HEAD
+  EMPLOYEE
+}
+
+enum AssetStatus {
+  AVAILABLE
+  ALLOCATED
+  UNDER_MAINTENANCE
+  LOST
+  DISPOSED
+}
+
+enum AllocationStatus {
+  ACTIVE
+  RETURNED
+  TRANSFER_PENDING
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+enum MaintenanceStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum AuditStatus {
+  OPEN
+  CLOSED
+}
+
+enum AuditItemStatus {
+  PENDING
+  VERIFIED
+  MISSING
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  password     String
+  name         String
+  role         Role        @default(EMPLOYEE)
+  
+  departmentId String?
+  department   Department? @relation("DepartmentMembers", fields: [departmentId], references: [id])
+  
+  headedDepartment Department? @relation("DepartmentHead")
+
+  allocations  Allocation[]
+  bookings     Booking[]
+  maintenanceRequests MaintenanceRequest[] @relation("RaisedBy")
+  approvedMaintenance MaintenanceRequest[] @relation("ApprovedBy")
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Department {
+  id      String @id @default(uuid())
+  name    String @unique
+  
+  headId  String? @unique
+  head    User?   @relation("DepartmentHead", fields: [headId], references: [id])
+  
+  members User[]  @relation("DepartmentMembers")
+  assets  Asset[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Asset {
+  id           String      @id @default(uuid())
+  name         String
+  category     String
+  status       AssetStatus @default(AVAILABLE)
+  serialNo     String?     @unique
+  purchaseDate DateTime?
+  value        Float?
+  
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  allocations  Allocation[]
+  bookings     Booking[]
+  maintenanceRequests MaintenanceRequest[]
+  auditItems   AuditItem[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Allocation {
+  id          String           @id @default(uuid())
+  assetId     String
+  userId      String
+  allocatedAt DateTime         @default(now())
+  returnedAt  DateTime?
+  status      AllocationStatus @default(ACTIVE)
+
+  asset       Asset @relation(fields: [assetId], references: [id])
+  user        User  @relation(fields: [userId], references: [id])
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  resourceId  String
+  userId      String
+  startTime   DateTime
+  endTime     DateTime
+  status      BookingStatus @default(CONFIRMED)
+
+  resource    Asset @relation(fields: [resourceId], references: [id])
+  user        User  @relation(fields: [userId], references: [id])
+}
+
+model MaintenanceRequest {
+  id          String            @id @default(uuid())
+  assetId     String
+  raisedById  String
+  approvedById String?
+  description String
+  status      MaintenanceStatus @default(REQUESTED)
+
+  asset       Asset @relation(fields: [assetId], references: [id])
+  raisedBy    User  @relation("RaisedBy", fields: [raisedById], references: [id])
+  approvedBy  User? @relation("ApprovedBy", fields: [approvedById], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditCycle {
+  id        String      @id @default(uuid())
+  name      String
+  startDate DateTime    @default(now())
+  endDate   DateTime?
+  status    AuditStatus @default(OPEN)
+
+  items     AuditItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditItem {
+  id           String          @id @default(uuid())
+  cycleId      String
+  assetId      String
+  status       AuditItemStatus @default(PENDING)
+
+  cycle        AuditCycle @relation(fields: [cycleId], references: [id])
+  asset        Asset      @relation(fields: [assetId], references: [id])
+
+  @@unique([cycleId, assetId])
 }
