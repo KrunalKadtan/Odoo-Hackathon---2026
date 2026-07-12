@@ -11,7 +11,8 @@ import {
   ShieldCheck,
   LogOut,
   Menu,
-  X
+  X,
+  ArrowRightLeft
 } from 'lucide-react';
 
 export const Layout = () => {
@@ -22,6 +23,7 @@ export const Layout = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Assets', href: '/assets', icon: Box },
+    { name: 'Allocations', href: '/allocations', icon: ArrowRightLeft },
     { name: 'Bookings', href: '/bookings', icon: CalendarDays },
     { name: 'Maintenance', href: '/maintenance', icon: Wrench },
   ];
