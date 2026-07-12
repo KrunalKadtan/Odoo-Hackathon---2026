@@ -13,6 +13,7 @@ import {
   ArrowRightLeft
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { Skeleton } from '../components/ui/Skeleton';
 
 interface DashboardData {
   scope: 'GLOBAL' | 'PERSONAL';
@@ -44,8 +45,23 @@ export const DashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="animate-in fade-in flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+      <div className="animate-in fade-in space-y-6">
+        <div className="mb-8">
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)}
+            </div>
+            <Skeleton className="h-96 rounded-xl" />
+          </div>
+          <Skeleton className="h-full min-h-[400px] rounded-xl" />
+        </div>
       </div>
     );
   }

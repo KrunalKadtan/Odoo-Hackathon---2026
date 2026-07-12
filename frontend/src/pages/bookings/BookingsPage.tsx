@@ -8,6 +8,7 @@ import { useAuthStore } from '../../store/auth.store';
 import { Plus, XCircle } from 'lucide-react';
 import { SlideOver } from '../../components/ui/SlideOver';
 import { Input } from '../../components/ui/Input';
+import { TableSkeleton } from '../../components/ui/Skeleton';
 
 interface Booking {
   id: string;
@@ -122,7 +123,7 @@ export const BookingsPage = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-8"><span className="text-zinc-500">Loading...</span></div>
+        <TableSkeleton rows={5} />
       ) : (
         <DataTable
           data={bookings}

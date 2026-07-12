@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { SlideOver } from '../../components/ui/SlideOver';
 import { StatusBadge } from '../../components/ui/StatusBadge';
+import { TableSkeleton } from '../../components/ui/Skeleton';
 import { Plus, CheckCircle2, ArrowRightLeft } from 'lucide-react';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -28,6 +29,7 @@ interface Asset {
 export const AssetsPage = () => {
   const { user } = useAuthStore();
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
   const [departments, setDepartments] = useState<{id: string, name: string}[]>([]);
   const [isSlideOpen, setIsSlideOpen] = useState(false);
   
@@ -62,11 +64,14 @@ export const AssetsPage = () => {
 
   const fetchAssets = async () => {
     try {
+      setLoading(true);
       const url = filterStatus ? `/assets?status=${filterStatus}` : '/assets';
       const res = await api.get(url);
       setAssets(res.data.data);
     } catch (error) {
       toast.error('Failed to load assets');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -184,19 +189,23 @@ export const AssetsPage = () => {
         )}
       </div>
 
-      <DataTable
-        data={assets}
-        columns={[
-          { header: 'Asset Name', accessor: 'name' },
-          { header: 'Category', accessor: 'category' },
-          { header: 'Serial No', accessor: (row) => row.serialNo || <span className="text-zinc-600">-</span> },
-          { header: 'Department', accessor: (row) => row.department?.name || <span className="text-zinc-600">Global</span> },
-          { header: 'Status', accessor: (row) => <StatusBadge status={row.status} /> },
-        ]}
-        searchField="name"
-        filterComponent={StatusFilter}
-        onRowClick={handleRowClick}
-      />
+      {loading ? (
+        <TableSkeleton rows={8} />
+      ) : (
+        <DataTable
+          data={assets}
+          columns={[
+            { header: 'Asset Name', accessor: 'name' },
+            { header: 'Category', accessor: 'category' },
+            { header: 'Serial No', accessor: (row) => row.serialNo || <span className="text-zinc-600">-</span> },
+            { header: 'Department', accessor: (row) => row.department?.name || <span className="text-zinc-600">Global</span> },
+            { header: 'Status', accessor: (row) => <StatusBadge status={row.status} /> },
+          ]}
+          searchField="name"
+          filterComponent={StatusFilter}
+          onRowClick={handleRowClick}
+        />
+      )}
 
       <SlideOver
         isOpen={isSlideOpen}

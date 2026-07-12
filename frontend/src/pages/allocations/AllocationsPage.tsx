@@ -4,6 +4,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { Button } from '../../components/ui/Button';
 import { toast } from 'react-hot-toast';
+import { TableSkeleton } from '../../components/ui/Skeleton';
 import { useAuthStore } from '../../store/auth.store';
 import { Undo2, CheckCircle2 } from 'lucide-react';
 import { SlideOver } from '../../components/ui/SlideOver';
@@ -114,7 +115,7 @@ export const AllocationsPage = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-8"><span className="text-zinc-500">Loading...</span></div>
+        <TableSkeleton rows={6} />
       ) : (
         <DataTable
           data={allocations}

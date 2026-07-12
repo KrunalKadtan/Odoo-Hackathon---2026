@@ -3,6 +3,7 @@ import { api } from '../../api/axios';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { Button } from '../../components/ui/Button';
 import { SlideOver } from '../../components/ui/SlideOver';
+import { TableSkeleton } from '../../components/ui/Skeleton';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '../../store/auth.store';
 import { ShieldCheck, CheckCircle2, AlertTriangle, XCircle, ChevronLeft, Plus, ClipboardList } from 'lucide-react';
@@ -178,7 +179,7 @@ export const AuditsPage = () => {
         </div>
 
         {isDetailLoading ? (
-          <div className="flex justify-center p-8"><span className="text-zinc-500">Loading items...</span></div>
+          <TableSkeleton rows={4} />
         ) : (
           <div className="border border-zinc-800 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
@@ -265,7 +266,9 @@ export const AuditsPage = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-8"><span className="text-zinc-500">Loading...</span></div>
+        <div className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800 rounded-xl overflow-hidden p-4">
+          <TableSkeleton rows={3} />
+        </div>
       ) : cycles.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center border border-zinc-800 rounded-lg">
           <ShieldCheck className="h-12 w-12 text-zinc-700 mb-4" />

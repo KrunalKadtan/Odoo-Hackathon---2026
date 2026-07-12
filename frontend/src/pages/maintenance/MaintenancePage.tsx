@@ -4,6 +4,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { Button } from '../../components/ui/Button';
 import { SlideOver } from '../../components/ui/SlideOver';
+import { TableSkeleton } from '../../components/ui/Skeleton';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '../../store/auth.store';
 import { CheckCircle2, XCircle, Wrench, PackageCheck, Plus } from 'lucide-react';
@@ -123,7 +124,7 @@ export const MaintenancePage = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-8"><span className="text-zinc-500">Loading...</span></div>
+        <TableSkeleton rows={5} />
       ) : (
         <DataTable
           data={filtered}
