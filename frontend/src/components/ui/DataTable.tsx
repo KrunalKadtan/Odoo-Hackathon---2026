@@ -14,6 +14,7 @@ interface DataTableProps<T> {
   searchField?: keyof T;
   filterComponent?: React.ReactNode;
   itemsPerPage?: number;
+  onRowClick?: (row: T) => void;
 }
 
 export function DataTable<T>({ 
@@ -22,7 +23,8 @@ export function DataTable<T>({
   searchable = true, 
   searchField, 
   filterComponent,
-  itemsPerPage = 10 
+  itemsPerPage = 10,
+  onRowClick
 }: DataTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -86,7 +88,11 @@ export function DataTable<T>({
           <tbody className="divide-y divide-zinc-800">
             {paginatedData.length > 0 ? (
               paginatedData.map((row, i) => (
-                <tr key={i} className="hover:bg-zinc-800/50 transition-colors">
+                <tr 
+                  key={i} 
+                  onClick={() => onRowClick?.(row)}
+                  className={`hover:bg-zinc-800/50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                >
                   {columns.map((col, j) => (
                     <td key={j} className="px-6 py-4 whitespace-nowrap text-sm text-zinc-300">
                       {typeof col.accessor === 'function'
