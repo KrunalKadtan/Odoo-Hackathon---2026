@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { toast } from 'react-hot-toast';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { useAuthStore } from '../../store/auth.store';
-import { Undo2, CheckCircle2 } from 'lucide-react';
+import { Undo2, CheckCircle2, Plus } from 'lucide-react';
 import { SlideOver } from '../../components/ui/SlideOver';
 
 interface Allocation {
@@ -30,6 +30,13 @@ export const AllocationsPage = () => {
   const [allUsers, setAllUsers] = useState<{id: string, name: string}[]>([]);
   const [newUserId, setNewUserId] = useState('');
 
+  // Create Slideover State
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [availableAssets, setAvailableAssets] = useState<{id: string, name: string}[]>([]);
+  const [newAllocationAssetId, setNewAllocationAssetId] = useState('');
+  const [newAllocationUserId, setNewAllocationUserId] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+
   const { user } = useAuthStore();
   const canManageAllocations = user?.role === 'ADMIN' || user?.role === 'ASSET_MANAGER';
 
@@ -50,6 +57,13 @@ export const AllocationsPage = () => {
     try {
       const res = await api.get('/users');
       setAllUsers(res.data.data);
+    } catch (error) {}
+  };
+
+  const fetchAvailableAssets = async () => {
+    try {
+      const res = await api.get('/assets?status=AVAILABLE');
+      setAvailableAssets(res.data.data);
     } catch (error) {}
   };
 
@@ -75,6 +89,29 @@ export const AllocationsPage = () => {
     setNewUserId('');
     if (allUsers.length === 0) fetchUsers();
     setIsTransferOpen(true);
+  };
+
+  const openCreateModal = () => {
+    setNewAllocationAssetId('');
+    setNewAllocationUserId('');
+    if (allUsers.length === 0) fetchUsers();
+    fetchAvailableAssets();
+    setIsCreateOpen(true);
+  };
+
+  const handleCreateAllocation = async () => {
+    if (!newAllocationAssetId || !newAllocationUserId) return;
+    setIsCreating(true);
+    try {
+      await api.post('/allocations', { assetId: newAllocationAssetId, userId: newAllocationUserId });
+      toast.success('Asset allocated successfully');
+      setIsCreateOpen(false);
+      fetchAllocations();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to allocate asset');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleApproveTransfer = async () => {
@@ -112,6 +149,11 @@ export const AllocationsPage = () => {
           <h1 className="text-2xl font-bold text-white">Allocations</h1>
           <p className="text-zinc-400 text-sm mt-1">Track and manage asset assignments across the organization.</p>
         </div>
+        {canManageAllocations && (
+          <Button variant="primary" onClick={openCreateModal}>
+            <Plus className="h-4 w-4 mr-2" /> Allocate Asset
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -210,6 +252,55 @@ export const AllocationsPage = () => {
             </div>
           </div>
         )}
+      </SlideOver>
+
+      {/* Create Allocation SlideOver */}
+      <SlideOver
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="Allocate Asset"
+        description="Assign an available asset to an employee."
+      >
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-zinc-300">
+              Select Asset
+            </label>
+            <select
+              value={newAllocationAssetId}
+              onChange={(e) => setNewAllocationAssetId(e.target.value)}
+              className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="">Select Available Asset...</option>
+              {availableAssets.map(a => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-zinc-300">
+              Assign To Employee
+            </label>
+            <select
+              value={newAllocationUserId}
+              onChange={(e) => setNewAllocationUserId(e.target.value)}
+              className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="">Select Employee...</option>
+              {allUsers.map(u => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="pt-4 border-t border-zinc-800 flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateAllocation} disabled={!newAllocationAssetId || !newAllocationUserId} isLoading={isCreating}>
+              Allocate Asset
+            </Button>
+          </div>
+        </div>
       </SlideOver>
     </div>
   );
