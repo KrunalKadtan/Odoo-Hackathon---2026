@@ -14,6 +14,7 @@ const allocation_routes_js_1 = __importDefault(require("./modules/allocations/al
 const booking_routes_js_1 = __importDefault(require("./modules/bookings/booking.routes.js"));
 const maintenance_routes_js_1 = __importDefault(require("./modules/maintenance/maintenance.routes.js"));
 const audit_routes_js_1 = __importDefault(require("./modules/audits/audit.routes.js"));
+const dashboard_routes_js_1 = __importDefault(require("./modules/dashboard/dashboard.routes.js"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
@@ -25,6 +26,7 @@ app.use('/api/v1/allocations', allocation_routes_js_1.default);
 app.use('/api/v1/bookings', booking_routes_js_1.default);
 app.use('/api/v1/maintenance', maintenance_routes_js_1.default);
 app.use('/api/v1/audits', audit_routes_js_1.default);
+app.use('/api/v1/dashboard', dashboard_routes_js_1.default);
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
 });

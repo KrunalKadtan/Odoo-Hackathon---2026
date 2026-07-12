@@ -10,6 +10,7 @@ import allocationRoutes from './modules/allocations/allocation.routes.js';
 import bookingRoutes from './modules/bookings/booking.routes.js';
 import maintenanceRoutes from './modules/maintenance/maintenance.routes.js';
 import auditRoutes from './modules/audits/audit.routes.js';
+import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api/v1/allocations', allocationRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/maintenance', maintenanceRoutes);
 app.use('/api/v1/audits', auditRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
