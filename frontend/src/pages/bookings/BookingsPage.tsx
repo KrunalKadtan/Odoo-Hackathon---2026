@@ -62,12 +62,8 @@ export const BookingsPage = () => {
 
   const fetchBookableAssets = async () => {
     try {
-      const res = await api.get('/assets');
-      const assets = res.data.data.filter((a: any) =>
-        a.status === 'AVAILABLE' &&
-        (a.category.toLowerCase().includes('room') || a.category.toLowerCase().includes('resource'))
-      );
-      setBookableAssets(assets);
+      const res = await api.get('/assets?status=AVAILABLE');
+      setBookableAssets(res.data.data);
     } catch {}
   };
 

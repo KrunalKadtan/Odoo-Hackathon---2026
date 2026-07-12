@@ -129,22 +129,26 @@ export const AllocationsPage = () => {
     }
   };
 
-  const StatusFilter = (
-    <select
-      value={filterStatus}
-      onChange={(e) => setFilterStatus(e.target.value)}
-      className="bg-zinc-900 border border-zinc-800 rounded-md px-3 py-1.5 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-    >
-      <option value="ALL">All Status</option>
-      <option value="ACTIVE">Active</option>
-      <option value="TRANSFER_PENDING">Transfer Pending</option>
-      <option value="RETURNED">Returned</option>
-    </select>
-  );
+  const STATUS_PILLS = [
+    { value: 'ALL',              label: 'All' },
+    { value: 'ACTIVE',           label: 'Active',           color: 'emerald' },
+    { value: 'TRANSFER_PENDING', label: 'Transfer Pending', color: 'amber' },
+    { value: 'RETURNED',         label: 'Returned',         color: 'zinc' },
+  ];
+
+  const pillClass = (val: string, color?: string) => {
+    if (filterStatus !== val) return 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700';
+    const map: Record<string, string> = {
+      emerald: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400',
+      amber:   'bg-amber-500/15 border-amber-500/40 text-amber-400',
+      zinc:    'bg-zinc-500/15 border-zinc-500/40 text-zinc-300',
+    };
+    return color ? map[color] : 'bg-indigo-500/15 border-indigo-500/40 text-indigo-400';
+  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Allocations</h1>
           <p className="text-zinc-400 text-sm mt-1">Track and manage asset assignments across the organization.</p>
@@ -154,6 +158,19 @@ export const AllocationsPage = () => {
             <Plus className="h-4 w-4 mr-2" /> Allocate Asset
           </Button>
         )}
+      </div>
+
+      {/* Pill filters */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {STATUS_PILLS.map(p => (
+          <button
+            key={p.value}
+            onClick={() => setFilterStatus(p.value)}
+            className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-200 ${pillClass(p.value, p.color)}`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
       {isLoading ? (
