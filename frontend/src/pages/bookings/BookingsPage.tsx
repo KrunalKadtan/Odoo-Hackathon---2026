@@ -6,8 +6,8 @@ import { toast } from 'react-hot-toast';
 import { useAuthStore } from '../../store/auth.store';
 import { Plus, XCircle, CalendarDays, Clock, User } from 'lucide-react';
 import { SlideOver } from '../../components/ui/SlideOver';
-import { Input } from '../../components/ui/Input';
 import { TableSkeleton } from '../../components/ui/Skeleton';
+import { DateTimePicker } from '../../components/ui/DateTimePicker';
 
 interface Booking {
   id: string;
@@ -18,8 +18,8 @@ interface Booking {
   user: { id: string; name: string };
 }
 
-// Hour range displayed on the timeline (9am – 6pm)
-const HOURS = Array.from({ length: 10 }, (_, i) => i + 9);
+// Hour range displayed on the timeline (9am – 7pm)
+const HOURS = Array.from({ length: 11 }, (_, i) => i + 9);
 
 const COLOR_POOL = [
   'bg-indigo-500/20 border-indigo-500/40 text-indigo-300',
@@ -29,21 +29,32 @@ const COLOR_POOL = [
   'bg-amber-500/20 border-amber-500/40 text-amber-300',
 ];
 
+const today = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
 export const BookingsPage = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
+  const [viewDate, setViewDate] = useState<Date>(today());
   const [viewMode, setViewMode] = useState<'timeline' | 'list'>('timeline');
 
   // Create Slideover State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [bookableAssets, setBookableAssets] = useState<{ id: string; name: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    resourceId: '',
-    date: new Date().toISOString().split('T')[0],
-    startTime: '09:00',
-    endTime: '10:00',
+  const [selectedResource, setSelectedResource] = useState('');
+  const [startDateTime, setStartDateTime] = useState<Date | null>(() => {
+    const d = new Date();
+    d.setHours(9, 0, 0, 0);
+    return d;
+  });
+  const [endDateTime, setEndDateTime] = useState<Date | null>(() => {
+    const d = new Date();
+    d.setHours(10, 0, 0, 0);
+    return d;
   });
 
   const { user } = useAuthStore();
@@ -81,14 +92,18 @@ export const BookingsPage = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.resourceId) return toast.error('Please select a resource');
-    const startDateTime = new Date(`${formData.date}T${formData.startTime}:00`).toISOString();
-    const endDateTime = new Date(`${formData.date}T${formData.endTime}:00`).toISOString();
-    if (new Date(endDateTime) <= new Date(startDateTime)) return toast.error('End time must be after start time');
+    if (!selectedResource) return toast.error('Please select a resource');
+    if (!startDateTime || !endDateTime) return toast.error('Please select start and end times');
+    if (endDateTime <= startDateTime) return toast.error('End time must be after start time');
 
     setIsSubmitting(true);
     try {
-      await api.post('/bookings', { resourceId: formData.resourceId, userId: user?.id, startTime: startDateTime, endTime: endDateTime });
+      await api.post('/bookings', {
+        resourceId: selectedResource,
+        userId: user?.id,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+      });
       toast.success('Booking created successfully');
       setIsCreateOpen(false);
       fetchBookings();
@@ -104,13 +119,14 @@ export const BookingsPage = () => {
     setIsCreateOpen(true);
   };
 
-  // Filter bookings for selected date
+  // Filter bookings for selected timeline date
+  const viewDateStr = viewDate.toISOString().split('T')[0];
   const dayBookings = bookings.filter(b => {
     const d = new Date(b.startTime).toISOString().split('T')[0];
-    return d === viewDate;
+    return d === viewDateStr;
   });
 
-  // Group by resource for timeline rows
+  // Unique resources in all bookings
   const resources = Array.from(new Set(bookings.map(b => b.resource.id))).map(rid => {
     const b = bookings.find(b => b.resource.id === rid)!;
     return { id: rid, name: b.resource.name, category: b.resource.category };
@@ -121,12 +137,12 @@ export const BookingsPage = () => {
     const end = new Date(booking.endTime);
     const startH = start.getHours() + start.getMinutes() / 60;
     const endH = end.getHours() + end.getMinutes() / 60;
-    const gridStart = 9; // 9am
-    const gridEnd = 19;  // 7pm
+    const gridStart = 9;
+    const gridEnd = 20;
     const totalHours = gridEnd - gridStart;
     const left = Math.max(0, ((startH - gridStart) / totalHours) * 100);
     const width = Math.min(100 - left, ((endH - startH) / totalHours) * 100);
-    return { left: `${left}%`, width: `${width}%` };
+    return { left: `${left}%`, width: `${Math.max(width, 2)}%` };
   };
 
   return (
@@ -163,15 +179,16 @@ export const BookingsPage = () => {
         <TableSkeleton rows={5} />
       ) : viewMode === 'timeline' ? (
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden">
-          {/* Date navigation */}
+          {/* Date navigation using the DateTimePicker */}
           <div className="flex items-center gap-4 px-5 py-4 border-b border-zinc-800">
-            <CalendarDays className="h-4 w-4 text-indigo-400" />
-            <input
-              type="date"
-              value={viewDate}
-              onChange={e => setViewDate(e.target.value)}
-              className="bg-zinc-900 border border-zinc-800 rounded-md px-3 py-1.5 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-            />
+            <div className="w-52">
+              <DateTimePicker
+                selected={viewDate}
+                onChange={(d) => d && setViewDate(d)}
+                placeholderText="Select date"
+                dateFormat="EEE, MMM d, yyyy"
+              />
+            </div>
             <span className="text-zinc-500 text-sm">{dayBookings.length} booking{dayBookings.length !== 1 ? 's' : ''} this day</span>
           </div>
 
@@ -179,7 +196,7 @@ export const BookingsPage = () => {
           <div className="overflow-x-auto">
             <div className="min-w-[700px] p-4">
               {/* Hour labels */}
-              <div className="flex mb-2 ml-32">
+              <div className="flex mb-2 ml-36">
                 {HOURS.map(h => (
                   <div key={h} className="flex-1 text-xs text-zinc-600 text-center">
                     {h === 12 ? '12pm' : h < 12 ? `${h}am` : `${h - 12}pm`}
@@ -189,41 +206,34 @@ export const BookingsPage = () => {
 
               {/* Resource rows */}
               {resources.length === 0 ? (
-                <div className="text-center py-16 text-zinc-600">No bookable resources yet. Create a booking to see the timeline.</div>
+                <div className="text-center py-16 text-zinc-600 text-sm">No bookings yet. Create one to see the timeline.</div>
               ) : resources.map((res, rIdx) => {
                 const resBookings = dayBookings.filter(b => b.resource.id === res.id);
                 return (
-                  <div key={res.id} className="flex items-center mb-3 group">
-                    {/* Resource label */}
-                    <div className="w-32 shrink-0 pr-3">
+                  <div key={res.id} className="flex items-center mb-3">
+                    <div className="w-36 shrink-0 pr-3">
                       <p className="text-xs font-medium text-zinc-300 truncate">{res.name}</p>
                       <p className="text-[10px] text-zinc-600 truncate">{res.category}</p>
                     </div>
-                    {/* Time grid */}
                     <div className="flex-1 relative h-10 bg-zinc-800/30 rounded-lg border border-zinc-800">
-                      {/* Grid lines */}
                       <div className="absolute inset-0 flex">
                         {HOURS.map(h => (
                           <div key={h} className="flex-1 border-r border-zinc-800/50 last:border-r-0" />
                         ))}
                       </div>
-                      {/* Booking blocks */}
                       {resBookings.map((b, bIdx) => {
                         const pos = getPosition(b);
                         const colorCls = COLOR_POOL[(rIdx + bIdx) % COLOR_POOL.length];
                         return (
                           <div
                             key={b.id}
-                            className={`absolute top-1 bottom-1 rounded border ${colorCls} px-2 flex items-center text-[10px] font-medium overflow-hidden cursor-default group/block`}
+                            className={`absolute top-1 bottom-1 rounded border ${colorCls} px-2 flex items-center text-[10px] font-medium overflow-hidden group/block cursor-default`}
                             style={pos}
                             title={`${b.user.name} · ${new Date(b.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${new Date(b.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                           >
                             <span className="truncate">{b.user.name}</span>
                             {(b.user.id === user?.id || user?.role === 'ADMIN') && b.status === 'CONFIRMED' && (
-                              <button
-                                onClick={() => handleCancel(b.id)}
-                                className="ml-auto shrink-0 opacity-0 group-hover/block:opacity-100 transition-opacity"
-                              >
+                              <button onClick={() => handleCancel(b.id)} className="ml-auto shrink-0 opacity-0 group-hover/block:opacity-100 transition-opacity">
                                 <XCircle className="h-3 w-3" />
                               </button>
                             )}
@@ -268,49 +278,91 @@ export const BookingsPage = () => {
         </div>
       )}
 
+      {/* ── New Booking SlideOver ─────────────────────────────────── */}
       <SlideOver
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         title="New Booking"
-        description="Select a resource and time slot to book."
+        description="Pick a resource and a time window — we'll check availability automatically."
       >
-        <form onSubmit={handleCreate} className="space-y-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Resource</label>
-              <select
-                required
-                value={formData.resourceId}
-                onChange={(e) => setFormData(prev => ({ ...prev, resourceId: e.target.value }))}
-                className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-              >
-                <option value="">Select Resource...</option>
-                {bookableAssets.map(a => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-              {bookableAssets.length === 0 && (
-                <p className="mt-1 text-xs text-zinc-500">No bookable resources available.</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Date</label>
-              <Input type="date" required value={formData.date} onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))} min={new Date().toISOString().split('T')[0]} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">Start Time</label>
-                <Input type="time" required value={formData.startTime} onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-1">End Time</label>
-                <Input type="time" required value={formData.endTime} onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))} />
-              </div>
-            </div>
+        <form onSubmit={handleCreate} className="space-y-5">
+
+          {/* Resource */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Resource</label>
+            <select
+              required
+              value={selectedResource}
+              onChange={(e) => setSelectedResource(e.target.value)}
+              className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-3 py-2.5 text-sm text-zinc-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none [color-scheme:dark]"
+            >
+              <option value="">Select Resource...</option>
+              {bookableAssets.map(a => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+            {bookableAssets.length === 0 && (
+              <p className="mt-1.5 text-xs text-zinc-500">No available resources found.</p>
+            )}
           </div>
+
+          {/* Start DateTime */}
+          <DateTimePicker
+            label="Start Date & Time"
+            selected={startDateTime}
+            onChange={(d) => {
+              setStartDateTime(d);
+              if (d && endDateTime && d >= endDateTime) {
+                const newEnd = new Date(d.getTime() + 60 * 60 * 1000);
+                setEndDateTime(newEnd);
+              }
+            }}
+            showTimeSelect
+            timeIntervals={30}
+            minDate={today()}
+            dateFormat="EEE, MMM d · h:mm aa"
+            placeholderText="Pick start date & time"
+            required
+          />
+
+          {/* End DateTime */}
+          <DateTimePicker
+            label="End Date & Time"
+            selected={endDateTime}
+            onChange={setEndDateTime}
+            showTimeSelect
+            timeIntervals={30}
+            minDate={startDateTime ?? today()}
+            dateFormat="EEE, MMM d · h:mm aa"
+            placeholderText="Pick end date & time"
+            required
+          />
+
+          {/* Live summary */}
+          {selectedResource && startDateTime && endDateTime && endDateTime > startDateTime && (
+            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 space-y-1">
+              <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Booking Summary</p>
+              <p className="text-sm font-medium text-white">
+                {bookableAssets.find(a => a.id === selectedResource)?.name}
+              </p>
+              <p className="text-xs text-indigo-300/80">
+                {startDateTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                {' · '}
+                {startDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {' → '}
+                {endDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+              <p className="text-xs text-zinc-500">
+                Duration: {Math.round((endDateTime.getTime() - startDateTime.getTime()) / 60000)} minutes
+              </p>
+            </div>
+          )}
+
           <div className="pt-4 border-t border-zinc-800 flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-            <Button type="submit" isLoading={isSubmitting}>Confirm Booking</Button>
+            <Button type="submit" isLoading={isSubmitting}>
+              <CalendarDays className="h-4 w-4 mr-1.5" /> Confirm Booking
+            </Button>
           </div>
         </form>
       </SlideOver>

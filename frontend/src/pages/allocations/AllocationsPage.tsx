@@ -133,7 +133,7 @@ export const AllocationsPage = () => {
     { value: 'ALL',              label: 'All' },
     { value: 'ACTIVE',           label: 'Active',           color: 'emerald' },
     { value: 'TRANSFER_PENDING', label: 'Transfer Pending', color: 'amber' },
-    { value: 'RETURNED',         label: 'Returned',         color: 'zinc' },
+    { value: 'RETURNED',         label: 'Returned',         color: 'violet' },
   ];
 
   const pillClass = (val: string, color?: string) => {
@@ -141,7 +141,7 @@ export const AllocationsPage = () => {
     const map: Record<string, string> = {
       emerald: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400',
       amber:   'bg-amber-500/15 border-amber-500/40 text-amber-400',
-      zinc:    'bg-zinc-500/15 border-zinc-500/40 text-zinc-300',
+      violet: 'bg-violet-500/15 border-violet-500/40 text-violet-400',
     };
     return color ? map[color] : 'bg-indigo-500/15 border-indigo-500/40 text-indigo-400';
   };
@@ -178,6 +178,13 @@ export const AllocationsPage = () => {
       ) : (
         <DataTable
           data={allocations}
+          searchFn={(row, term) => {
+            const t = term.toLowerCase();
+            return (
+              row.asset.name.toLowerCase().includes(t) ||
+              row.user.name.toLowerCase().includes(t)
+            );
+          }}
           columns={[
             { header: 'Asset', accessor: (row) => (
               <div>
@@ -222,7 +229,6 @@ export const AllocationsPage = () => {
               )
             }] : []),
           ]}
-          filterComponent={StatusFilter}
         />
       )}
 

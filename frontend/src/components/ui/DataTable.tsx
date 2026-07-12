@@ -12,6 +12,7 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   searchable?: boolean;
   searchField?: keyof T;
+  searchFn?: (row: T, term: string) => boolean;
   filterComponent?: React.ReactNode;
   itemsPerPage?: number;
   onRowClick?: (row: T) => void;
@@ -21,7 +22,8 @@ export function DataTable<T>({
   data, 
   columns, 
   searchable = true, 
-  searchField, 
+  searchField,
+  searchFn,
   filterComponent,
   itemsPerPage = 10,
   onRowClick
@@ -31,14 +33,18 @@ export function DataTable<T>({
 
   const filteredData = useMemo(() => {
     let result = data;
-    if (searchable && searchField && searchTerm) {
-      result = result.filter((item) => {
-        const value = item[searchField];
-        return String(value).toLowerCase().includes(searchTerm.toLowerCase());
-      });
+    if (searchable && searchTerm) {
+      if (searchFn) {
+        result = result.filter(item => searchFn(item, searchTerm));
+      } else if (searchField) {
+        result = result.filter((item) => {
+          const value = item[searchField];
+          return String(value).toLowerCase().includes(searchTerm.toLowerCase());
+        });
+      }
     }
     return result;
-  }, [data, searchable, searchField, searchTerm]);
+  }, [data, searchable, searchField, searchFn, searchTerm]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice(
