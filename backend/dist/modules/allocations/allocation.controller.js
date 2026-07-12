@@ -6,7 +6,8 @@ exports.allocationController = {
     async getAll(req, res, next) {
         try {
             const status = req.query.status;
-            const allocations = await allocation_service_js_1.allocationService.getAllAllocations({ status });
+            const user = req.user; // From authenticate middleware
+            const allocations = await allocation_service_js_1.allocationService.getAllAllocations({ status }, user);
             res.json({ success: true, data: allocations });
         }
         catch (error) {

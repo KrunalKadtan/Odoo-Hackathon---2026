@@ -4,10 +4,20 @@ exports.allocationService = void 0;
 const prisma_js_1 = require("../../config/prisma.js");
 const AppError_js_1 = require("../../utils/AppError.js");
 exports.allocationService = {
-    async getAllAllocations(query) {
+    async getAllAllocations(query, user) {
         const where = {};
         if (query.status) {
             where.status = query.status;
+        }
+        if (user.role === 'EMPLOYEE') {
+            where.userId = user.id;
+        }
+        else if (user.role === 'DEPT_HEAD' && user.departmentId) {
+            // DEPT_HEAD sees their own allocations + all allocations for their department
+            where.OR = [
+                { userId: user.id },
+                { user: { departmentId: user.departmentId } }
+            ];
         }
         return prisma_js_1.prisma.allocation.findMany({
             where,

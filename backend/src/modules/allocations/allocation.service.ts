@@ -3,10 +3,20 @@ import { AppError } from '../../utils/AppError.js';
 import { CreateAllocationInput, ApproveTransferInput } from './allocation.schema.js';
 
 export const allocationService = {
-  async getAllAllocations(query: { status?: string }) {
+  async getAllAllocations(query: { status?: string }, user: { id: string, role: string, departmentId: string | null }) {
     const where: any = {};
     if (query.status) {
       where.status = query.status;
+    }
+
+    if (user.role === 'EMPLOYEE') {
+      where.userId = user.id;
+    } else if (user.role === 'DEPT_HEAD' && user.departmentId) {
+      // DEPT_HEAD sees their own allocations + all allocations for their department
+      where.OR = [
+        { userId: user.id },
+        { user: { departmentId: user.departmentId } }
+      ];
     }
 
     return prisma.allocation.findMany({

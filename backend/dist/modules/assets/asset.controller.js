@@ -19,7 +19,8 @@ exports.assetController = {
     },
     async getOne(req, res, next) {
         try {
-            const asset = await asset_service_js_1.assetService.getAssetById(req.params.id);
+            const user = req.user;
+            const asset = await asset_service_js_1.assetService.getAssetById(req.params.id, user);
             res.status(200).json({ status: 'success', data: asset });
         }
         catch (error) {

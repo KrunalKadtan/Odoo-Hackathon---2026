@@ -18,7 +18,8 @@ export const assetController = {
 
   async getOne(req: Request, res: Response, next: NextFunction) {
     try {
-      const asset = await assetService.getAssetById(req.params.id as string);
+      const user = req.user as any;
+      const asset = await assetService.getAssetById(req.params.id as string, user);
       res.status(200).json({ status: 'success', data: asset });
     } catch (error) {
       next(error);

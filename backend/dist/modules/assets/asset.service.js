@@ -26,12 +26,25 @@ exports.assetService = {
             orderBy: { createdAt: 'desc' },
         });
     },
-    async getAssetById(id) {
+    async getAssetById(id, user) {
+        let allocationsWhere = {};
+        if (user?.role === 'EMPLOYEE') {
+            allocationsWhere = { userId: user.id };
+        }
+        else if (user?.role === 'DEPT_HEAD' && user.departmentId) {
+            allocationsWhere = {
+                OR: [
+                    { userId: user.id },
+                    { user: { departmentId: user.departmentId } }
+                ]
+            };
+        }
         const asset = await prisma_js_1.prisma.asset.findUnique({
             where: { id },
             include: {
                 department: { select: { id: true, name: true } },
                 allocations: {
+                    where: Object.keys(allocationsWhere).length > 0 ? allocationsWhere : undefined,
                     include: { user: { select: { id: true, name: true } } },
                     orderBy: { allocatedAt: 'desc' },
                 },

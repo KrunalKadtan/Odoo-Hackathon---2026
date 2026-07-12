@@ -299,7 +299,7 @@ export const AssetsPage = () => {
               </div>
             )}
 
-            {selectedAsset.status === 'ALLOCATED' && (
+            {selectedAsset.status === 'ALLOCATED' && selectedAsset.allocations?.some(a => a.status === 'ACTIVE') && (
               <div className="pt-4 border-t border-zinc-800 space-y-4">
                 <h4 className="text-sm font-medium text-white">Current Holder</h4>
                 {selectedAsset.allocations?.filter(a => a.status === 'ACTIVE').map(allocation => (
