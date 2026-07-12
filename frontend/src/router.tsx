@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { OrganizationPage } from './pages/admin/OrganizationPage';
 import { AssetsPage } from './pages/assets/AssetsPage';
 import { AllocationsPage } from './pages/allocations/AllocationsPage';
+import { BookingsPage } from './pages/bookings/BookingsPage';
 
 export const router = createBrowserRouter([
   {
@@ -38,6 +39,10 @@ export const router = createBrowserRouter([
           {
             path: '/allocations',
             element: <AllocationsPage />,
+          },
+          {
+            path: '/bookings',
+            element: <BookingsPage />,
           },
           {
             path: '/admin/organization',
